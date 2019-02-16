@@ -8,10 +8,7 @@ Public lookup_word As String
 Public lookup_len As Integer
 Public Output_Test(2 To 5, 1 To 4) As String
 Public Output_Words(1 To 180580) As String
-
-
-
-
+Public boardPositionUsed(2 To 5, 1 To 4) As Boolean
 
 
 
@@ -34,6 +31,19 @@ Sub Rectangle1_Click()
     '7. results display
         Call Output
          
+End Sub
+Sub clearUsed()
+Dim i As Integer
+Dim j As Integer
+
+For i = 2 To 5
+    For j = 1 To 4
+    
+    boardPositionUsed(i, j) = False
+    
+    Next j
+Next i
+    
 End Sub
 Function parse_cell(instring As String) As String
     If (Left(instring, 1)) = "-" Then
@@ -73,31 +83,47 @@ Dim j As Integer
 Dim x As Integer, y As Integer
 Dim i_up As Integer, i_low As Integer
 Dim j_up As Integer, j_low As Integer
-
+'using recursion
 'try dfs approach
+
+'recursive algorithm for getting substring from adjacent blocks
+' takes in a board position (which contains a string and other information)? or takes in a string? or both
+' results in a string or sequence of board positions?
+
+'what is my basis case?
+
+
+
 
 For i = 2 To 5
     For j = 1 To 4
-        Adj_List(i, j) = Letters(i, j) + ":"
-        ' cycling through each row then each column to look at the letter
-        ' find list of adjacent letters
+        Call clearUsed
+        ' cycling through each row then each column to look at the board substring
+        ' find list of words that start with this board position
+        'when doing a recursion, simply check for "Ends With" and then don't originate from this board's substring
+        If (Diagram(i, j) <> "Ends With") Then
+        'start from this position and look for more board entries to add.
+        boardPositionUsed(i, j) = True
+        'cycling through adjacent rows and columns to look at nearby board entries
         For x = i - 1 To i + 1
             For y = j - 1 To j + 1
-            'cycling through adjacent rows and columns to look at nearby board entries
+               
+            
                 If ((x <> i Or j <> y) And (x > 1 And x < 6) And (y > 0 And y < 5)) Then
-                'satisfies unique new board entry, in range, FW3 add constraint for not used.
-                'do a dictionary check, is there a word that begins with the string?
-                'is there a restriction on the next board entry's string use?
+                 'when doing recursion, if it is "Begins With" only originate
+                If (Diagram(x, y) <> "Begins With") And (boardPositionUsed(x, y) = False) Then
                 
-                'when doing a recursion, simply check for "Ends With" and then don't originate from this board's substring
-                
-                'when doing recursion, if it is "Begins With" only originate
-                
+                'satisfies adjacent board entry, not used.
                 'when doing recursion on "Either Or" allow two options for the next call
                 
-                'i, j should not be a ends with, and x y not a begins with.
-                If ((Diagram(i, j) <> "Ends With") And (Diagram(x, y) <> "Begins With")) Then
+                'do a dictionary check for the resulting substring(s)
                 
+                
+                
+                
+                '--rerwrite from here
+                
+                   
                 ' either or will have to branch to two possibilities - this is x y case.
                     If (Diagram(x, y) = "Either Or") Then
                     lookup_word = Letters(i, j) + Left(Letters(x, y), 1)
@@ -116,29 +142,12 @@ For i = 2 To 5
                 
                            Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Right(Letters(x, y), 1)
                          End If
-                    
                 
-                
-                    Else ' end if of either or x y
-                
-                   If (Diagram(i, j) = "Begins With") Then
-                    If (Diagram(x, y) = "Ends With") Then
-                    'both are special diagrams
-                    lookup_word = Left(Letters(i, j), Len(Letters(i, j)) - 1) + Right(Letters(x, y), Len(Letters(x, y)) - 1)
-                    Else
-                    'just the begins with
-                    lookup_word = Left(Letters(i, j), Len(Letters(i, j)) - 1) + Letters(x, y)
-                    End If
-                    
-                   ElseIf (Diagram(x, y) = "Ends With") Then
-                   'just the ends with
-                   lookup_word = Letters(i, j) + Right(Letters(x, y), Len(Letters(x, y)) - 1)
-                    Else
-                    'neither
-                    lookup_word = Letters(i, j) + Letters(x, y)
-                    End If
-                    
+                    Else ' else of either or x y
                    
+                   
+                   
+                   lookup_word = Letters(i, j) + Letters(x, y)
                    lookup_len = Len(lookup_word)
                    
                    
@@ -148,15 +157,22 @@ For i = 2 To 5
                 
                            Adj_List(i, j) = Adj_List(i, j) + "  " + lookup_word
                        End If
-                    End If ' end if for check on either or
-                End If ' end if of diagram
-                
-                End If
-                
+                    End If ' end of either or
+                    
+                       '--- rewrite to here
+                       
+                       
+                       
+                       
+                       
+                    End If ' end if for check on valid x,y
+      
+                End If 'end if for if x,y were not an ends with
             Next y
         Next x
             
     Output_Test(i, j) = Adj_List(i, j)
+    End If 'end if for if i,j is not a begins with
     Next j
 Next i
 
@@ -218,6 +234,13 @@ Sub inputs()
         Letters(cell.Row, cell.Column) = cell.Value
         'FW1 add parse string to find special diagram notes
         Diagram(cell.Row, cell.Column) = parse_cell(cell.Value)
+        If (Diagram(cell.Row, cell.Column) = "Begins With") Then
+            Letters(cell.Row, cell.Column) = Right(cell.Value, Len(cell.Value) - 1)
+        End If
+        If (Diagram(cell.Row, cell.Column) = "Ends With") Then
+            Letters(cell.Row, cell.Column) = Left(cell.Value, Len(cell.Value) - 1)
+        End If
+        
         'FW2 add find highlighting code to get properties
         Special(cell.Row, cell.Column) = 1
     Next cell
