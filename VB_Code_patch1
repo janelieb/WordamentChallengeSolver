@@ -1,0 +1,252 @@
+'Global Var Definitions
+Public Letters(2 To 5, 1 To 4) As String
+Public Diagram(2 To 5, 1 To 4) As String
+Public Special(2 To 5, 1 To 4) As String
+Public Dictionary_Words(1 To 180580) As String
+Public Adj_List(2 To 5, 1 To 4) As String
+Public lookup_word As String
+Public lookup_len As Integer
+Public Output_Test(2 To 5, 1 To 4) As String
+Public Output_Words(1 To 180580) As String
+Public boardPositionUsed(2 To 5, 1 To 4) As Boolean
+
+
+
+
+Sub Rectangle1_Click()
+'main steps to split up into parts for easier adaptation to environment/customization:
+    '1. user input read and association of properties
+        Call inputs
+       
+    '2. dictionary read
+        Call dictionary_read
+    
+    '3. prepro of dictionary if any
+        
+    '4. subroutine to create list of possible moves
+      Call get_adjacent
+    
+    '5. assignment of weights to possible moves list
+    '6. eventually an iterative step to look multiple moves out and clear gems/count down to end of game.
+    '7. results display
+        Call Output
+         
+End Sub
+Sub clearUsed()
+Dim i As Integer
+Dim j As Integer
+
+For i = 2 To 5
+    For j = 1 To 4
+    
+    boardPositionUsed(i, j) = False
+    
+    Next j
+Next i
+    
+End Sub
+Function parse_cell(instring As String) As String
+    If (Left(instring, 1)) = "-" Then
+        parse_cell = "Ends With"
+    ElseIf (Right(instring, 1)) = "-" Then
+        parse_cell = "Begins With"
+    ElseIf (Mid(instring, 2, 1) = "/") Then
+        parse_cell = "Either Or"
+    Else
+        parse_cell = "None"
+    End If
+        
+End Function
+Function dictionary_lookup() As Boolean
+'given a string input cycle through dictonary words looking for a word starting with the same sequence
+
+'return a true or false for if a word is present in the dictionary or not found for now
+Dim i As Long
+For i = 1 To 180580
+    ' added 2/16 initializing output words
+    Output_Words(i) = ""
+    If Left(Dictionary_Words(i), lookup_len) = lookup_word Then
+        dictionary_lookup = True
+        i = 180580 ' in other words, stop looking and just add the substr.
+        If (Len(Dictionary_Words(i)) = lookup_len) Then
+        Output_Words(i) = Dictionary_Words(i)
+        End If
+    Else
+        dictionary_lookup = False
+    End If
+Next i
+            
+End Function
+Sub get_adjacent()
+Dim i As Integer
+Dim j As Integer
+Dim x As Integer, y As Integer
+Dim i_up As Integer, i_low As Integer
+Dim j_up As Integer, j_low As Integer
+'using recursion
+'try dfs approach
+
+'recursive algorithm for getting substring from adjacent blocks
+' takes in a board position (which contains a string and other information)? or takes in a string? or both
+' results in a string or sequence of board positions?
+
+'what is my basis case?
+
+
+
+
+For i = 2 To 5
+    For j = 1 To 4
+        Call clearUsed
+        ' cycling through each row then each column to look at the board substring
+        ' find list of words that start with this board position
+        'when doing a recursion, simply check for "Ends With" and then don't originate from this board's substring
+        If (Diagram(i, j) <> "Ends With") Then
+        'start from this position and look for more board entries to add.
+        boardPositionUsed(i, j) = True
+        'cycling through adjacent rows and columns to look at nearby board entries
+        For x = i - 1 To i + 1
+            For y = j - 1 To j + 1
+               
+            
+                If ((x <> i Or j <> y) And (x > 1 And x < 6) And (y > 0 And y < 5)) Then
+                 'when doing recursion, if it is "Begins With" only originate
+                If (Diagram(x, y) <> "Begins With") And (boardPositionUsed(x, y) = False) Then
+                
+                'satisfies adjacent board entry, not used.
+                'when doing recursion on "Either Or" allow two options for the next call
+                
+                'do a dictionary check for the resulting substring(s)
+                
+                
+                
+                
+                '--rerwrite from here
+                
+                   
+                ' either or will have to branch to two possibilities - this is x y case.
+                    If (Diagram(x, y) = "Either Or") Then
+                    lookup_word = Letters(i, j) + Left(Letters(x, y), 1)
+                    lookup_len = Len(lookup_word)
+                        If (dictionary_lookup()) Then
+                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
+                           'before adding recursion, let's add the logic to figure out the funny diagrams
+                
+                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Left(Letters(x, y), 1)
+                         End If
+                    lookup_word = Letters(i, j) + Right(Letters(x, y), 1)
+                    lookup_len = Len(lookup_word)
+                        If (dictionary_lookup()) Then
+                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
+                           'before adding recursion, let's add the logic to figure out the funny diagrams
+                
+                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Right(Letters(x, y), 1)
+                         End If
+                
+                    Else ' else of either or x y
+                   
+                   
+                   
+                   lookup_word = Letters(i, j) + Letters(x, y)
+                   lookup_len = Len(lookup_word)
+                   
+                   
+                       If (dictionary_lookup()) Then
+                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
+                           'before adding recursion, let's add the logic to figure out the funny diagrams
+                
+                           Adj_List(i, j) = Adj_List(i, j) + "  " + lookup_word
+                       End If
+                    End If ' end of either or
+                    
+                       '--- rewrite to here
+                       
+                       
+                       
+                       
+                       
+                    End If ' end if for check on valid x,y
+      
+                End If 'end if for if x,y were not an ends with
+            Next y
+        Next x
+            
+    Output_Test(i, j) = Adj_List(i, j)
+    End If 'end if for if i,j is not a begins with
+    Next j
+Next i
+
+
+
+
+End Sub
+Sub dictionary_read()
+'set word range to first column of words given by the words used in scrabble plus all the words in english language 9 letters to 16.
+Dim Dictionary As Worksheet
+  Set Dictionary = ActiveWorkbook.Sheets("Sheet2")
+  Dim dict As Range
+  Set dict = Dictionary.Range("A2:A180580")
+'we can go two paths here, create an array of possible substrings and pass that, which i think is kind of a bad idea, i think it
+'it would be wiser to re-parse the substring as needed
+' i do however think it is smart to at this point create the necessary size dictionary to memory, maybe? that or start the algorithm here.
+' if i recall correctly passing from cell value to memory is expensive, but once an object is created in memory in VBA it is easier accessed.
+
+For Each cell In dict
+  Dictionary_Words(cell.Row) = cell.Value
+Next cell
+  
+
+End Sub
+
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    Application.ScreenUpdating = False
+    ' Clear the color of all the cells
+    Cells.Interior.ColorIndex = 0
+    ' Highlight the active cell
+    Target.Interior.ColorIndex = 8
+    Application.ScreenUpdating = True
+End Sub
+Sub Output()
+'writing to workbook
+'currently testing just getting the input and re-writing
+    Dim Output As Range
+    Set Output = Range("e2:h5")
+    For Each cell In Output
+        cell.Value = Output_Test(cell.Row, cell.Column - 4)
+    Next cell
+
+End Sub
+
+Sub inputs()
+' when will VBA EVER have block comments??
+'user input read
+'RM1 assumes workbook entry is formatted as a grid so position is inherent to cell and user is confined to area in worksheet.
+'FW1 parse string in each cell will be required to discover properties. Initally no diagram restriction properties allowed. add later and test
+'FW2 all letters will assumed to not be special to start with to avoid weighting problem until after other issues are debugged.
+'RM2 general approach:
+    '1 define variables: input range, (public) (static?) 3 2-dimensional arrays to hold for each board position the 3 major properties therein: letters present, diagram restriction, special bonus.
+    '2 cycle through range, assign to each array the letter, and properties.
+  Dim userInput As Range
+ Set userInput = Range("A2:D5")
+
+    For Each cell In userInput
+        Letters(cell.Row, cell.Column) = cell.Value
+        'FW1 add parse string to find special diagram notes
+        Diagram(cell.Row, cell.Column) = parse_cell(cell.Value)
+        If (Diagram(cell.Row, cell.Column) = "Begins With") Then
+            Letters(cell.Row, cell.Column) = Right(cell.Value, Len(cell.Value) - 1)
+        End If
+        If (Diagram(cell.Row, cell.Column) = "Ends With") Then
+            Letters(cell.Row, cell.Column) = Left(cell.Value, Len(cell.Value) - 1)
+        End If
+        
+        'FW2 add find highlighting code to get properties
+        Special(cell.Row, cell.Column) = 1
+    Next cell
+
+End Sub
+
+
+
+
