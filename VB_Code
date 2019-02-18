@@ -9,6 +9,9 @@ Public lookup_len As Integer
 Public Output_Test(2 To 5, 1 To 4) As String
 Public Output_Words(1 To 180580) As String
 Public boardPositionUsed(2 To 5, 1 To 4) As Boolean
+Public letters_fixed(1 To 16) As Integer
+
+
 
 
 
@@ -32,6 +35,47 @@ Sub Rectangle1_Click()
         Call Output
          
 End Sub
+Function path_to_word(i As String) As String
+'initialize word to blank
+'determine length, that /2 is num of board entries
+'loop for each entry, get two "digit" substring of the path string
+    'conversion formula is col is first digit, row is second
+    'then retrieve the board position's letters
+    'concatenate to word
+'return word
+
+
+End Function
+Function boardPath_Recursive(i As String) As String
+'to simplify life changing from col-row notation to board position notation as:
+' 11 12 13 14
+' 21 22 23 24
+' 31 32 33 34
+' 41 41 43 44
+
+'conversion formula is concatenation of col num and row num
+
+'input board sequence
+'output board sequence
+
+'get word from board path using function path_to_word and check for it in the dictionary
+'if word is in dictionary
+    'return with path
+    'write word to possible outputs list
+    'write path to possible paths list
+'else
+    'look to adjacent entries
+    'if all are used
+        'return
+    'else
+        'call recursive board path with adjacent paths
+'end if
+
+
+
+
+End Function
+
 Sub clearUsed()
 Dim i As Integer
 Dim j As Integer
@@ -63,7 +107,6 @@ Function dictionary_lookup() As Boolean
 'return a true or false for if a word is present in the dictionary or not found for now
 Dim i As Long
 For i = 1 To 180580
-    ' added 2/16 initializing output words
     Output_Words(i) = ""
     If Left(Dictionary_Words(i), lookup_len) = lookup_word Then
         dictionary_lookup = True
@@ -91,6 +134,12 @@ Dim j_up As Integer, j_low As Integer
 ' results in a string or sequence of board positions?
 
 'what is my basis case?
+
+'return when matching substr in dictionary of length substr
+'call new instance when substr in dictionary but not == length
+
+
+
 
 
 
