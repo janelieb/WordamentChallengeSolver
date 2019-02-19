@@ -1,15 +1,18 @@
 'Global Var Definitions
-Public Letters(2 To 5, 1 To 4) As String
-Public Diagram(2 To 5, 1 To 4) As String
-Public Special(2 To 5, 1 To 4) As String
+Public Letters(2 To 9, 1 To 4) As String
+Public Diagram(2 To 9, 1 To 4) As String
+Public Special(2 To 9, 1 To 4) As String
 Public Dictionary_Words(1 To 180580) As String
-Public Adj_List(2 To 5, 1 To 4) As String
+Public Adj_List(2 To 9, 1 To 4) As String
 Public lookup_word As String
 Public lookup_len As Integer
-Public Output_Test(2 To 5, 1 To 4) As String
+Public Output_Test(2 To 9, 1 To 4) As String
 Public Output_Words(1 To 180580) As String
-Public boardPositionUsed(2 To 5, 1 To 4) As Boolean
-Public letters_fixed(1 To 16) As Integer
+Public boardPositionUsed(2 To 9, 1 To 4) As Boolean
+Public outputPath_List(1 To 180580) As String
+Public outputWord_List(1 To 180580) As String
+Public output_index As Integer
+
 
 
 
@@ -27,6 +30,8 @@ Sub Rectangle1_Click()
     '3. prepro of dictionary if any
         
     '4. subroutine to create list of possible moves
+        output_index = 0
+        
       Call get_adjacent
     
     '5. assignment of weights to possible moves list
@@ -35,23 +40,55 @@ Sub Rectangle1_Click()
         Call Output
          
 End Sub
-Function path_to_word(i As String) As String
-'initialize word to blank
+Function path_to_word(inputString As String) As String
+
+Dim word As String
+Dim path_length As Integer
+Dim entries As Integer
+Dim i As Integer
+Dim rownum As Integer
+Dim colnum As Integer
+
+
+path_length = Len(inputString)
+
 'determine length, that /2 is num of board entries
+entries = path_length / 2
+
+'initialize word to blank
+word = ""
+
+
+For i = 1 To entries
 'loop for each entry, get two "digit" substring of the path string
+    'so first entry is the first two digits of the string
     'conversion formula is col is first digit, row is second
+        colnum = CInt(Mid(inputString, 2 * i - 1, 1))
+        rownum = CInt(Mid(inputString, 2 * i, 1))
     'then retrieve the board position's letters
     'concatenate to word
-'return word
-
+    'return word
+        word = word + Letters(rownum, colnum)
+Next i
+path_to_word = word
 
 End Function
 Function boardPath_Recursive(i As String) As String
+Dim word As String
+
+
 'to simplify life changing from col-row notation to board position notation as:
-' 11 12 13 14
-' 21 22 23 24
-' 31 32 33 34
-' 41 41 43 44
+' 11 21 31 41   actually coded in letters as rows from 2 to 5
+' 12 22 32 42
+' 13 23 33 43
+' 14 24 34 44
+'either or issue?
+'hidden second board that is empty coded with +4 to the row.
+'or board
+'15 25 35 45
+'16 26 36 46
+'17 27 37 47
+'18 28 38 48
 
 'conversion formula is concatenation of col num and row num
 
@@ -59,20 +96,28 @@ Function boardPath_Recursive(i As String) As String
 'output board sequence
 
 'get word from board path using function path_to_word and check for it in the dictionary
+lookup_word = path_to_word(i)
+lookup_len = Len(lookup_word)
+
+
 'if word is in dictionary
-    'return with path
+ If (dictionary_lookup() = True) Then
+    output_index = output_index + 1
     'write word to possible outputs list
+        outputWord_List(output_index) = lookup_word
     'write path to possible paths list
+        outputPath_List(output_index) = i
+    'return with path
+    boardPath_Recursive = i
 'else
+Else
     'look to adjacent entries
     'if all are used
         'return
     'else
         'call recursive board path with adjacent paths
 'end if
-
-
-
+End If
 
 End Function
 
@@ -80,7 +125,7 @@ Sub clearUsed()
 Dim i As Integer
 Dim j As Integer
 
-For i = 2 To 5
+For i = 2 To 9
     For j = 1 To 4
     
     boardPositionUsed(i, j) = False
@@ -150,7 +195,7 @@ For i = 2 To 5
         ' cycling through each row then each column to look at the board substring
         ' find list of words that start with this board position
         'when doing a recursion, simply check for "Ends With" and then don't originate from this board's substring
-        If (Diagram(i, j) <> "Ends With") Then
+       ' If (Diagram(i, j) <> "Ends With") Then
         'start from this position and look for more board entries to add.
         boardPositionUsed(i, j) = True
         'cycling through adjacent rows and columns to look at nearby board entries
@@ -160,7 +205,7 @@ For i = 2 To 5
             
                 If ((x <> i Or j <> y) And (x > 1 And x < 6) And (y > 0 And y < 5)) Then
                  'when doing recursion, if it is "Begins With" only originate
-                If (Diagram(x, y) <> "Begins With") And (boardPositionUsed(x, y) = False) Then
+              '  If (Diagram(x, y) <> "Begins With") And (boardPositionUsed(x, y) = False) Then
                 
                 'satisfies adjacent board entry, not used.
                 'when doing recursion on "Either Or" allow two options for the next call
@@ -175,27 +220,49 @@ For i = 2 To 5
                    
                 ' either or will have to branch to two possibilities - this is x y case.
                     If (Diagram(x, y) = "Either Or") Then
-                    lookup_word = Letters(i, j) + Left(Letters(x, y), 1)
+                    lookup_word = Letters(i, j) + Letters(x, y)
                     lookup_len = Len(lookup_word)
                         If (dictionary_lookup()) Then
                            'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
                            'before adding recursion, let's add the logic to figure out the funny diagrams
                 
-                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Left(Letters(x, y), 1)
+                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x, y)
                          End If
-                    lookup_word = Letters(i, j) + Right(Letters(x, y), 1)
+                    lookup_word = Letters(i, j) + Letters(x + 4, y)
                     lookup_len = Len(lookup_word)
                         If (dictionary_lookup()) Then
                            'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
                            'before adding recursion, let's add the logic to figure out the funny diagrams
                 
-                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Right(Letters(x, y), 1)
+                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x + 4, y)
                          End If
                 
-                    Else ' else of either or x y
+                    End If ' else of either or x y
+                    
+                   'technically not needed? but adding just in case
+                   If Diagram(i, j) = "Either Or" Then
+                   lookup_word = Letters(i, j) + Letters(x, y)
+                   lookup_len = Len(lookup_word)
+                        If (dictionary_lookup()) Then
+                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
+                           'before adding recursion, let's add the logic to figure out the funny diagrams
+                
+                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x, y)
+                         End If
+                    lookup_word = Letters(i + 4, j) + Letters(x, y)
+                    lookup_len = Len(lookup_word)
+                    
+                        If (dictionary_lookup()) Then
+                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
+                           'before adding recursion, let's add the logic to figure out the funny diagrams
+                
+                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i + 4, j) + Letters(x, y)
+                        End If
+                   End If
                    
+                   'seperating out either or stuff into isolated segments
                    
-                   
+                   If (Diagram(i, j) = "None" And Diagram(x, y) = "None") Then
                    lookup_word = Letters(i, j) + Letters(x, y)
                    lookup_len = Len(lookup_word)
                    
@@ -206,7 +273,7 @@ For i = 2 To 5
                 
                            Adj_List(i, j) = Adj_List(i, j) + "  " + lookup_word
                        End If
-                    End If ' end of either or
+                    End If
                     
                        '--- rewrite to here
                        
@@ -214,14 +281,14 @@ For i = 2 To 5
                        
                        
                        
-                    End If ' end if for check on valid x,y
+                   ' End If ' end if for check on valid x,y
       
                 End If 'end if for if x,y were not an ends with
             Next y
         Next x
             
     Output_Test(i, j) = Adj_List(i, j)
-    End If 'end if for if i,j is not a begins with
+   ' End If 'end if for if i,j is not a begins with
     Next j
 Next i
 
@@ -241,7 +308,7 @@ Dim Dictionary As Worksheet
 ' if i recall correctly passing from cell value to memory is expensive, but once an object is created in memory in VBA it is easier accessed.
 
 For Each cell In dict
-  Dictionary_Words(cell.Row) = cell.Value
+  Dictionary_Words(cell.row) = cell.Value
 Next cell
   
 
@@ -262,7 +329,7 @@ Sub Output()
     Dim Output As Range
     Set Output = Range("e2:h5")
     For Each cell In Output
-        cell.Value = Output_Test(cell.Row, cell.Column - 4)
+        cell.Value = Output_Test(cell.row, cell.Column - 4)
     Next cell
 
 End Sub
@@ -280,18 +347,28 @@ Sub inputs()
  Set userInput = Range("A2:D5")
 
     For Each cell In userInput
-        Letters(cell.Row, cell.Column) = cell.Value
+        Letters(cell.row, cell.Column) = cell.Value
         'FW1 add parse string to find special diagram notes
-        Diagram(cell.Row, cell.Column) = parse_cell(cell.Value)
-        If (Diagram(cell.Row, cell.Column) = "Begins With") Then
-            Letters(cell.Row, cell.Column) = Right(cell.Value, Len(cell.Value) - 1)
+        Diagram(cell.row, cell.Column) = parse_cell(cell.Value)
+        If (Diagram(cell.row, cell.Column) = "Begins With") Then
+            Letters(cell.row, cell.Column) = Left(cell.Value, Len(cell.Value) - 1)
+            'cell.Value = Letters(cell.row, cell.Column)
         End If
-        If (Diagram(cell.Row, cell.Column) = "Ends With") Then
-            Letters(cell.Row, cell.Column) = Left(cell.Value, Len(cell.Value) - 1)
+        If (Diagram(cell.row, cell.Column) = "Ends With") Then
+            Letters(cell.row, cell.Column) = Right(cell.Value, Len(cell.Value) - 1)
+             'cell.Value = Letters(cell.row, cell.Column)
         End If
+        If (Diagram(cell.row, cell.Column) = "Either Or") Then
+            Letters(cell.row, cell.Column) = Left(cell.Value, 1)
+            Letters(cell.row + 4, cell.Column) = Right(cell.Value, 1)
+            Diagram(cell.row + 4, cell.Column) = "Either Or"
+            Special(cell.row + 4, cell.Column) = 1
+             'cell.Value = Letters(cell.row, cell.Column)
+        End If
+            
         
         'FW2 add find highlighting code to get properties
-        Special(cell.Row, cell.Column) = 1
+        Special(cell.row, cell.Column) = 1
     Next cell
 
 End Sub
