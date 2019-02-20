@@ -14,11 +14,6 @@ Public outputWord_List(1 To 180580) As String
 Public output_index As Integer
 
 
-
-
-
-
-
 Sub Rectangle1_Click()
 'main steps to split up into parts for easier adaptation to environment/customization:
     '1. user input read and association of properties
@@ -75,6 +70,16 @@ path_to_word = word
 End Function
 Function boardPath_Recursive(i As String) As String
 Dim word As String
+Dim row_iterator As Integer
+Dim col_iterator As Integer
+row_iterator = 0
+col_iterator = 0
+Dim all_adjacent_used As Boolean
+all_adjacent_used = True
+Dim active_tile As String
+Dim active_tile_row As Integer
+Dim active_tile_col As Integer
+Dim exit_condition_met As Boolean
 
 
 'to simplify life changing from col-row notation to board position notation as:
@@ -98,10 +103,14 @@ Dim word As String
 'get word from board path using function path_to_word and check for it in the dictionary
 lookup_word = path_to_word(i)
 lookup_len = Len(lookup_word)
+active_tile = Right(i, 2)
+active_tile_col = CInt(Left(active_tile, 1))
+active_tile_row = CInt(Right(active_tile, 1))
+exit_condition_met = False
 
-
-'if word is in dictionary
- If (dictionary_lookup() = True) Then
+If Len(i) = 32 Then
+    exit_condition_met = True
+     If (dictionary_lookup() = True) Then
     output_index = output_index + 1
     'write word to possible outputs list
         outputWord_List(output_index) = lookup_word
@@ -109,14 +118,48 @@ lookup_len = Len(lookup_word)
         outputPath_List(output_index) = i
     'return with path
     boardPath_Recursive = i
-'else
 Else
+    For row_iterator = active_tile_row - 1 To active_tile_row + 1
+        For col_iterator = active_tile_col - 1 To active_tile_col + 1
+            'if not the same tile and not used
+            If (!boardPositionUsed(row_iterator, col_iterator)) And (row_iterator <> active_tile_row Or col_iterator <> active_tile_col) And (Diagram(active_tile_row, active_tile_col) <> "Ends With") Then
+                If (Diagram(row_iterator, col_iterator) <> "Begins With") Then
+                    all_adjacent_used = False
+                End If
+            End If
+        Next col_iterator
+    Next row_iterator
+    If all_adjacent_used Then
+        exit_condition_met = True
+    End If
+End If
+
+
+If (!exit_condition_met) Then
+    'if word is in dictionary
+    If (dictionary_lookup() = True) Then
+      output_index = output_index + 1
+    'write word to possible outputs list
+        outputWord_List(output_index) = lookup_word
+    'write path to possible paths list
+        outputPath_List(output_index) = i
+    End If
+    'find adjacent board entry to last board path position
     'look to adjacent entries
-    'if all are used
-        'return
-    'else
-        'call recursive board path with adjacent paths
-'end if
+    'call recursive board path with adjacent paths
+    For row_iterator = active_tile_row - 1 To active_tile_row + 1
+        For col_iterator = active_tile_col - 1 To active_tile_col + 1
+            'if not the same tile and not used
+            If (!boardPositionUsed(row_iterator, col_iterator)) And (row_iterator <> active_tile_row Or col_iterator <> active_tile_col) And (Diagram(active_tile_row, active_tile_col) <> "Ends With") Then
+                If (Diagram(row_iterator, col_iterator) <> "Begins With") Then
+                'unique new tile unused and not a begins with
+                'append to boardPath after converting to position
+                'logic for either or
+                
+                End If
+            End If
+        Next col_iterator
+     Next row_iterator
 End If
 
 End Function
@@ -195,7 +238,7 @@ For i = 2 To 5
         ' cycling through each row then each column to look at the board substring
         ' find list of words that start with this board position
         'when doing a recursion, simply check for "Ends With" and then don't originate from this board's substring
-       ' If (Diagram(i, j) <> "Ends With") Then
+        If (Diagram(i, j) <> "Ends With") Then
         'start from this position and look for more board entries to add.
         boardPositionUsed(i, j) = True
         'cycling through adjacent rows and columns to look at nearby board entries
@@ -205,12 +248,12 @@ For i = 2 To 5
             
                 If ((x <> i Or j <> y) And (x > 1 And x < 6) And (y > 0 And y < 5)) Then
                  'when doing recursion, if it is "Begins With" only originate
-              '  If (Diagram(x, y) <> "Begins With") And (boardPositionUsed(x, y) = False) Then
+                If (Diagram(x, y) <> "Begins With") And (boardPositionUsed(x, y) = False) Then
                 
                 'satisfies adjacent board entry, not used.
                 'when doing recursion on "Either Or" allow two options for the next call
                 
-                'do a dictionary check for the resulting substring(s)
+                'need all possible adjacencies, dictionary lookup done elsewhere
                 
                 
                 
@@ -222,58 +265,21 @@ For i = 2 To 5
                     If (Diagram(x, y) = "Either Or") Then
                     lookup_word = Letters(i, j) + Letters(x, y)
                     lookup_len = Len(lookup_word)
-                        If (dictionary_lookup()) Then
-                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
-                           'before adding recursion, let's add the logic to figure out the funny diagrams
-                
-                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x, y)
-                         End If
+                    Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x, y)
+                   
                     lookup_word = Letters(i, j) + Letters(x + 4, y)
                     lookup_len = Len(lookup_word)
-                        If (dictionary_lookup()) Then
-                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
-                           'before adding recursion, let's add the logic to figure out the funny diagrams
-                
-                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x + 4, y)
-                         End If
-                
-                    End If ' else of either or x y
+                    Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x + 4, y)
                     
-                   'technically not needed? but adding just in case
-                   If Diagram(i, j) = "Either Or" Then
-                   lookup_word = Letters(i, j) + Letters(x, y)
-                   lookup_len = Len(lookup_word)
-                        If (dictionary_lookup()) Then
-                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
-                           'before adding recursion, let's add the logic to figure out the funny diagrams
-                
-                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x, y)
-                         End If
-                    lookup_word = Letters(i + 4, j) + Letters(x, y)
+                    Else ' else of either or x y
+                    lookup_word = Letters(i, j) + Letters(x, y)
+                    Adj_List(i, j) = Adj_List(i, j) + " " + Letters(i, j) + Letters(x, y)
                     lookup_len = Len(lookup_word)
-                    
-                        If (dictionary_lookup()) Then
-                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
-                           'before adding recursion, let's add the logic to figure out the funny diagrams
-                
-                           Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i + 4, j) + Letters(x, y)
-                        End If
-                   End If
-                   
-                   'seperating out either or stuff into isolated segments
-                   
-                   If (Diagram(i, j) = "None" And Diagram(x, y) = "None") Then
-                   lookup_word = Letters(i, j) + Letters(x, y)
-                   lookup_len = Len(lookup_word)
-                   
-                   
-                       If (dictionary_lookup()) Then
-                           'here it makes more sense to recursively look to next letter without re-use of position instead of adding to a list
-                           'before adding recursion, let's add the logic to figure out the funny diagrams
-                
-                           Adj_List(i, j) = Adj_List(i, j) + "  " + lookup_word
-                       End If
                     End If
+                    
+                   
+                   
+                  
                     
                        '--- rewrite to here
                        
@@ -281,14 +287,14 @@ For i = 2 To 5
                        
                        
                        
-                   ' End If ' end if for check on valid x,y
+                    End If ' end if for check on valid x,y
       
                 End If 'end if for if x,y were not an ends with
             Next y
         Next x
             
     Output_Test(i, j) = Adj_List(i, j)
-   ' End If 'end if for if i,j is not a begins with
+    End If 'end if for if i,j is not a ends with
     Next j
 Next i
 
