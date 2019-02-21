@@ -1,14 +1,13 @@
 'Global Var Definitions
-Public Letters(2 To 9, 1 To 4) As String
-Public Diagram(2 To 9, 1 To 4) As String
-Public Special(2 To 9, 1 To 4) As String
+Public Letters(1 To 8, 1 To 4) As String
+Public Diagram(1 To 8, 1 To 4) As String
+Public Special(1 To 8, 1 To 4) As String
 Public Dictionary_Words(1 To 180580) As String
-Public Adj_List(2 To 9, 1 To 4) As String
-Public lookup_word As String
-Public lookup_len As Integer
-Public Output_Test(2 To 9, 1 To 4) As String
+Public Adj_List(1 To 8, 1 To 4) As String
+
+Public Output_Test(1 To 8, 1 To 4) As String
 Public Output_Words(1 To 180580) As String
-Public boardPositionUsed(2 To 9, 1 To 4) As Boolean
+
 Public outputPath_List(1 To 180580) As String
 Public outputWord_List(1 To 180580) As String
 Public output_index As Integer
@@ -25,9 +24,9 @@ Sub Rectangle1_Click()
     '3. prepro of dictionary if any
         
     '4. subroutine to create list of possible moves
-        output_index = 0
         
-      Call get_adjacent
+        
+      Call loop_through_board
     
     '5. assignment of weights to possible moves list
     '6. eventually an iterative step to look multiple moves out and clear gems/count down to end of game.
@@ -35,6 +34,30 @@ Sub Rectangle1_Click()
         Call Output
          
 End Sub
+Sub loop_through_board()
+Dim row_it As Integer
+Dim col_it As Integer
+Dim path As String
+Dim tile As String
+
+output_index = 0
+
+For row_it = 1 To 4
+    For col_it = 1 To 4
+    output_index = output_index + 1
+        tile = CStr(col_it) + CStr(row_it)
+        path = boardPath_Recursive(tile)
+    Next col_it
+Next row_it
+
+
+ 
+ 
+        
+
+End Sub
+
+
 Function path_to_word(inputString As String) As String
 
 Dim word As String
@@ -68,7 +91,7 @@ Next i
 path_to_word = word
 
 End Function
-Function boardPath_Recursive(i As String) As String
+Function boardPath_Recursive(boardPath As String) As String
 Dim word As String
 Dim row_iterator As Integer
 Dim col_iterator As Integer
@@ -80,7 +103,14 @@ Dim active_tile As String
 Dim active_tile_row As Integer
 Dim active_tile_col As Integer
 Dim exit_condition_met As Boolean
-
+Dim new_tile As String
+Dim new_tile_or As String
+Dim word_for_lookup As String
+Dim dictionary_result As String
+Dim dummy_var_1 As String
+Dim dummy_var_2 As String
+'input board sequence
+'output board sequence
 
 'to simplify life changing from col-row notation to board position notation as:
 ' 11 21 31 41   actually coded in letters as rows from 2 to 5
@@ -97,86 +127,136 @@ Dim exit_condition_met As Boolean
 
 'conversion formula is concatenation of col num and row num
 
-'input board sequence
-'output board sequence
+
 
 'get word from board path using function path_to_word and check for it in the dictionary
-lookup_word = path_to_word(i)
-lookup_len = Len(lookup_word)
-active_tile = Right(i, 2)
+word_for_lookup = path_to_word(boardPath)
+
+active_tile = Right(boardPath, 2)
 active_tile_col = CInt(Left(active_tile, 1))
 active_tile_row = CInt(Right(active_tile, 1))
+
+    
+'undo either or displacement logic for row iteration purposes
+If active_tile_row > 4 Then
+    active_tile_row = active_tile_row - 4
+End If
+
+'exit condition initialized to false
 exit_condition_met = False
 
+
+'if word is in dictionary
+dictionary_result = dictionary_lookup(word_for_lookup)
+    If (dictionary_result = "Word Exists") Then
+        output_index = output_index + 1
+    'write word to possible outputs list
+        outputWord_List(output_index) = word_for_lookup
+    'write path to possible paths list
+        outputPath_List(output_index) = boardPath
+    End If
+    
+
+
+
+'exit if used board
 If Len(i) = 32 Then
     exit_condition_met = True
-     If (dictionary_lookup() = True) Then
-    output_index = output_index + 1
-    'write word to possible outputs list
-        outputWord_List(output_index) = lookup_word
-    'write path to possible paths list
-        outputPath_List(output_index) = i
-    'return with path
-    boardPath_Recursive = i
+ElseIf dictionary_result = "None Exist" Then
+    exit_condition_met = True
 Else
     For row_iterator = active_tile_row - 1 To active_tile_row + 1
         For col_iterator = active_tile_col - 1 To active_tile_col + 1
             'if not the same tile and not used
-            If (!boardPositionUsed(row_iterator, col_iterator)) And (row_iterator <> active_tile_row Or col_iterator <> active_tile_col) And (Diagram(active_tile_row, active_tile_col) <> "Ends With") Then
+            If (row_iterator > 0 And row_iterator < 5) And (col_iterator > 0 And col_iterator < 5) Then
+            If ((row_iterator <> active_tile_row) Or (col_iterator <> active_tile_col)) And (Diagram(active_tile_row, active_tile_col) <> "Ends With") Then
+                
+                
                 If (Diagram(row_iterator, col_iterator) <> "Begins With") Then
+                    new_tile = CStr(col_iterator) + CStr(row_iterator)
+                    If (checkUsed(boardPath + new_tile) = False) Then
                     all_adjacent_used = False
+                    End If
                 End If
+            
+            End If
             End If
         Next col_iterator
     Next row_iterator
+    
     If all_adjacent_used Then
         exit_condition_met = True
+        boardPath_Recursive = boardPath
     End If
+    
+    
 End If
 
 
-If (!exit_condition_met) Then
-    'if word is in dictionary
-    If (dictionary_lookup() = True) Then
-      output_index = output_index + 1
-    'write word to possible outputs list
-        outputWord_List(output_index) = lookup_word
-    'write path to possible paths list
-        outputPath_List(output_index) = i
-    End If
+
+If (exit_condition_met = False) Then
     'find adjacent board entry to last board path position
     'look to adjacent entries
     'call recursive board path with adjacent paths
     For row_iterator = active_tile_row - 1 To active_tile_row + 1
         For col_iterator = active_tile_col - 1 To active_tile_col + 1
             'if not the same tile and not used
-            If (!boardPositionUsed(row_iterator, col_iterator)) And (row_iterator <> active_tile_row Or col_iterator <> active_tile_col) And (Diagram(active_tile_row, active_tile_col) <> "Ends With") Then
+            If (row_iterator > 0 And row_iterator < 5) And (col_iterator > 0 And col_iterator < 5) Then
+            If (row_iterator <> active_tile_row Or col_iterator <> active_tile_col) And (Diagram(active_tile_row, active_tile_col) <> "Ends With") Then
                 If (Diagram(row_iterator, col_iterator) <> "Begins With") Then
                 'unique new tile unused and not a begins with
                 'append to boardPath after converting to position
+                new_tile = CStr(col_iterator) + CStr(row_iterator)
+                'mark new tile already used?
+                
+                If (checkUsed(boardPath + new_tile) = False) Then
                 'logic for either or
+                If Diagram(row_iterator, col_iterator) = "Either Or" Then
+                
+                new_tile_or = CStr(col_iterator) + CStr(row_iterator + 4)
+                dummyvar2 = boardPath_Recursive(boardPath + new_tile) + boardPath_Recursive(boardPath + new_tile_or)
+                Else
+                
+                dummyvar1 = boardPath_Recursive(boardPath + new_tile)
+                End If
+                End If
+
                 
                 End If
+            End If
             End If
         Next col_iterator
      Next row_iterator
 End If
-
+boardPath_Recursive = boardPath
 End Function
 
-Sub clearUsed()
+Function checkUsed(boardPath As String) As Boolean
+'check if the newest tile in board path is already used.
 Dim i As Integer
 Dim j As Integer
+Dim path_length As Integer
+Dim entries As Integer
+Dim last_tile As String
+last_tile = Right(boardPath, 2)
+path_length = Len(boardPath)
+entries = path_length / 2
 
-For i = 2 To 9
-    For j = 1 To 4
-    
-    boardPositionUsed(i, j) = False
-    
-    Next j
-Next i
-    
-End Sub
+'initialize value to false
+checkUsed = False
+
+'don't bother for less than 2 tiles
+If path_length > 2 Then
+'check up to one before last tile.
+    For i = 1 To entries - 1
+        'compare each entry's board index to last tile's index
+        If (Mid(boardPath, 2 * i - 1, 2) = last_tile) Then
+            checkUsed = True
+        End If
+    Next i
+End If
+
+End Function
 Function parse_cell(instring As String) As String
     If (Left(instring, 1)) = "-" Then
         parse_cell = "Ends With"
@@ -189,119 +269,47 @@ Function parse_cell(instring As String) As String
     End If
         
 End Function
-Function dictionary_lookup() As Boolean
+Function dictionary_lookup(lookup_word As String) As String
 'given a string input cycle through dictonary words looking for a word starting with the same sequence
-
+Dim lookup_len As Integer
+lookup_len = Len(lookup_word)
 'return a true or false for if a word is present in the dictionary or not found for now
 Dim i As Long
+
+dictionary_lookup = "None Exist"
+Dim checked_dictionary As Boolean
+checked_dictionary = False
+
 For i = 1 To 180580
-    Output_Words(i) = ""
+    If Left(Dictionary_Words(i), 1) = Left(lookup_word, 1) Then
+        'entered correct part of dictionary
+        checked_dictionary = True
+    
     If Left(Dictionary_Words(i), lookup_len) = lookup_word Then
-        dictionary_lookup = True
-        i = 180580 ' in other words, stop looking and just add the substr.
-        If (Len(Dictionary_Words(i)) = lookup_len) Then
-        Output_Words(i) = Dictionary_Words(i)
+        dictionary_lookup = "Get More Letters"
+        If Len(Dictionary_Words(i)) = lookup_len Then
+            dictionary_lookup = "Word Exists"
+             i = 180580 ' in other words, stop looking and just add the substr.
         End If
-    Else
-        dictionary_lookup = False
     End If
+    
+    End If
+    
+    
+    'optional optimization
+    If (i < 180580) Then
+    If (Left(Dictionary_Words(i + 1), 1) <> Left(lookup_word, 1)) Then
+    'break loop if checked the dictionary and exiting the relevant section
+    If checked_dictionary = True Then
+    i = 180580
+    End If
+    End If
+    End If
+    
 Next i
             
 End Function
-Sub get_adjacent()
-Dim i As Integer
-Dim j As Integer
-Dim x As Integer, y As Integer
-Dim i_up As Integer, i_low As Integer
-Dim j_up As Integer, j_low As Integer
-'using recursion
-'try dfs approach
 
-'recursive algorithm for getting substring from adjacent blocks
-' takes in a board position (which contains a string and other information)? or takes in a string? or both
-' results in a string or sequence of board positions?
-
-'what is my basis case?
-
-'return when matching substr in dictionary of length substr
-'call new instance when substr in dictionary but not == length
-
-
-
-
-
-
-
-For i = 2 To 5
-    For j = 1 To 4
-        Call clearUsed
-        ' cycling through each row then each column to look at the board substring
-        ' find list of words that start with this board position
-        'when doing a recursion, simply check for "Ends With" and then don't originate from this board's substring
-        If (Diagram(i, j) <> "Ends With") Then
-        'start from this position and look for more board entries to add.
-        boardPositionUsed(i, j) = True
-        'cycling through adjacent rows and columns to look at nearby board entries
-        For x = i - 1 To i + 1
-            For y = j - 1 To j + 1
-               
-            
-                If ((x <> i Or j <> y) And (x > 1 And x < 6) And (y > 0 And y < 5)) Then
-                 'when doing recursion, if it is "Begins With" only originate
-                If (Diagram(x, y) <> "Begins With") And (boardPositionUsed(x, y) = False) Then
-                
-                'satisfies adjacent board entry, not used.
-                'when doing recursion on "Either Or" allow two options for the next call
-                
-                'need all possible adjacencies, dictionary lookup done elsewhere
-                
-                
-                
-                
-                '--rerwrite from here
-                
-                   
-                ' either or will have to branch to two possibilities - this is x y case.
-                    If (Diagram(x, y) = "Either Or") Then
-                    lookup_word = Letters(i, j) + Letters(x, y)
-                    lookup_len = Len(lookup_word)
-                    Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x, y)
-                   
-                    lookup_word = Letters(i, j) + Letters(x + 4, y)
-                    lookup_len = Len(lookup_word)
-                    Adj_List(i, j) = Adj_List(i, j) + "  " + Letters(i, j) + Letters(x + 4, y)
-                    
-                    Else ' else of either or x y
-                    lookup_word = Letters(i, j) + Letters(x, y)
-                    Adj_List(i, j) = Adj_List(i, j) + " " + Letters(i, j) + Letters(x, y)
-                    lookup_len = Len(lookup_word)
-                    End If
-                    
-                   
-                   
-                  
-                    
-                       '--- rewrite to here
-                       
-                       
-                       
-                       
-                       
-                    End If ' end if for check on valid x,y
-      
-                End If 'end if for if x,y were not an ends with
-            Next y
-        Next x
-            
-    Output_Test(i, j) = Adj_List(i, j)
-    End If 'end if for if i,j is not a ends with
-    Next j
-Next i
-
-
-
-
-End Sub
 Sub dictionary_read()
 'set word range to first column of words given by the words used in scrabble plus all the words in english language 9 letters to 16.
 Dim Dictionary As Worksheet
@@ -314,7 +322,7 @@ Dim Dictionary As Worksheet
 ' if i recall correctly passing from cell value to memory is expensive, but once an object is created in memory in VBA it is easier accessed.
 
 For Each cell In dict
-  Dictionary_Words(cell.row) = cell.Value
+  Dictionary_Words(cell.row - 1) = cell.Value
 Next cell
   
 
@@ -333,10 +341,15 @@ Sub Output()
 'writing to workbook
 'currently testing just getting the input and re-writing
     Dim Output As Range
-    Set Output = Range("e2:h5")
+    Set Output = Range("e2:e2000")
     For Each cell In Output
-        cell.Value = Output_Test(cell.row, cell.Column - 4)
+        cell.Value = outputWord_List(cell.row - 1)
     Next cell
+    Set Output = Range("f2:f2000")
+    For Each cell In Output
+        cell.Value = outputPath_List(cell.row - 1)
+    Next cell
+    
 
 End Sub
 
@@ -353,28 +366,28 @@ Sub inputs()
  Set userInput = Range("A2:D5")
 
     For Each cell In userInput
-        Letters(cell.row, cell.Column) = cell.Value
+        Letters(cell.row - 1, cell.Column) = cell.Value
         'FW1 add parse string to find special diagram notes
-        Diagram(cell.row, cell.Column) = parse_cell(cell.Value)
-        If (Diagram(cell.row, cell.Column) = "Begins With") Then
-            Letters(cell.row, cell.Column) = Left(cell.Value, Len(cell.Value) - 1)
+        Diagram(cell.row - 1, cell.Column) = parse_cell(cell.Value)
+        If (Diagram(cell.row - 1, cell.Column) = "Begins With") Then
+            Letters(cell.row - 1, cell.Column) = Left(cell.Value, Len(cell.Value) - 1)
             'cell.Value = Letters(cell.row, cell.Column)
         End If
-        If (Diagram(cell.row, cell.Column) = "Ends With") Then
-            Letters(cell.row, cell.Column) = Right(cell.Value, Len(cell.Value) - 1)
+        If (Diagram(cell.row - 1, cell.Column) = "Ends With") Then
+            Letters(cell.row - 1, cell.Column) = Right(cell.Value, Len(cell.Value) - 1)
              'cell.Value = Letters(cell.row, cell.Column)
         End If
-        If (Diagram(cell.row, cell.Column) = "Either Or") Then
-            Letters(cell.row, cell.Column) = Left(cell.Value, 1)
-            Letters(cell.row + 4, cell.Column) = Right(cell.Value, 1)
-            Diagram(cell.row + 4, cell.Column) = "Either Or"
-            Special(cell.row + 4, cell.Column) = 1
+        If (Diagram(cell.row - 1, cell.Column) = "Either Or") Then
+            Letters(cell.row - 1, cell.Column) = Left(cell.Value, 1)
+            Letters(cell.row - 1 + 4, cell.Column) = Right(cell.Value, 1)
+            Diagram(cell.row - 1 + 4, cell.Column) = "Either Or"
+            Special(cell.row - 1 + 4, cell.Column) = 1
              'cell.Value = Letters(cell.row, cell.Column)
         End If
             
         
         'FW2 add find highlighting code to get properties
-        Special(cell.row, cell.Column) = 1
+        Special(cell.row - 1, cell.Column) = 1
     Next cell
 
 End Sub
